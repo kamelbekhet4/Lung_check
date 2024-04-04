@@ -44,7 +44,7 @@ dependencies:
   audioplayers: ^4.1.0
   camera: ^0.10.5+9
   image_picker: ^0.8.4+4
-
+  dio: ^4.0.4
 
 
 

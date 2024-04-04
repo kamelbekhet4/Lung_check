@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -13,136 +14,166 @@ class galleryScreen extends StatefulWidget {
 }
 
 class _galleryScreenState extends State<galleryScreen> {
-
-
-  List<File> selectedImages = [];
   final picker = ImagePicker();
-
+  File? _selectPhoto;
 
   @override
   Widget build(BuildContext context) {
     // display image selected from gallery
     return Scaffold(
-
-      body:  Container(
-
-
+      body: Container(
         height: double.infinity,
         width: double.infinity,
-        decoration: BoxDecoration(image: DecorationImage(
+        decoration: BoxDecoration(
+            image: DecorationImage(
           image: AssetImage('assets/w2.webp'),
-          fit: BoxFit.fill ,
+          fit: BoxFit.fill,
         )),
-
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SizedBox(height: 15,),
+            SizedBox(
+              height: 15,
+            ),
             Row(
               children: [
-                IconButton( icon: Icon(Icons.arrow_back) ,color: Colors.teal ,onPressed: (){ Navigator.pop(context) ;}),
+                IconButton(
+                    icon: Icon(Icons.arrow_back),
+                    color: Colors.teal,
+                    onPressed: () {
+                      Navigator.pop(context);
+                    }),
               ],
             ),
-            SizedBox(height: 20,),
+            SizedBox(
+              height: 20,
+            ),
             Container(
-
               height: 38,
               width: 180,
-
               child: ElevatedButton(
                 style: ButtonStyle(
                   // backgroundColor: MaterialStateProperty.all<Color>(Colors.green) ,
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(20),),
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
                   ),
-
                 ),
-                child: const Text('Select Image ' ,style: TextStyle(color: Colors.black,fontWeight: FontWeight.bold ),),
+                child: const Text(
+                  'Select Image ',
+                  style: TextStyle(
+                      color: Colors.black, fontWeight: FontWeight.bold),
+                ),
                 onPressed: () {
-                  getImages();
+                  _pickImage();
                 },
               ),
             ),
-            SizedBox(height: 20,),
+            SizedBox(
+              height: 20,
+            ),
             Expanded(
-
               child: SizedBox(
-
-                child: selectedImages.isEmpty
-                    ? const Center (
-                    child: Text('Sorry nothing selected !!',style: TextStyle(color: Colors.white), ))
-                    : GridView.builder(
-
-                  itemCount: selectedImages.length,
-                  gridDelegate:
-                  const SliverGridDelegateWithFixedCrossAxisCount( crossAxisCount: 1),
-                  itemBuilder: (BuildContext context, int index) {
-                    return Center(
-
-                        child: kIsWeb
-                            ? Image.network(selectedImages[index].path)
-                            : Image.file(selectedImages[index]));
-                  },
-                ),
-              ),
+                  child: _selectPhoto == null
+                      ? const Center(
+                          child: Text(
+                          'Sorry nothing selected !!',
+                          style: TextStyle(color: Colors.white),
+                        ))
+                      : Image.file(_selectPhoto!)),
             ),
             Center(
               child: Container(
-
                 height: 38,
                 width: 180,
                 child: ElevatedButton(
-
-                  style:  ButtonStyle(
+                  style: ButtonStyle(
                     // backgroundColor: MaterialStateProperty.all<Color>(Colors.green) ,
                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                      RoundedRectangleBorder(borderRadius: BorderRadius.circular(20),),
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                     ),
-
                   ),
-                  onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => ResultScreen()));},
-
+                  onPressed: () {
+                    _sendImage();
+                    // Navigator.push(
+                    //     context,
+                    //     MaterialPageRoute(
+                    //         builder: (context) => ResultScreen()));
+                  },
                   child: Text(
                     'Result',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
                       color: Colors.black,
-
                     ),
                   ),
-
-
                 ),
               ),
             ),
-            SizedBox(height: 40,),
+            SizedBox(
+              height: 40,
+            ),
           ],
         ),
       ),
     );
   }
 
-
-
-  Future getImages() async {
-    final pickedFile = await picker.pickMultiImage(
-        imageQuality: 100, maxHeight: 1000, maxWidth: 1000);
-    List<XFile> xfilePick = pickedFile;
-
-    setState(
-          () {
-
-        if (xfilePick.isNotEmpty) {
-          for (var i = 0; i < xfilePick.length; i++) {
-            selectedImages.add(File(xfilePick[i].path));
-          }
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Nothing is selected')));
-        }
-      },
-    );
+  Future<File?> _pickImage() async {
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      _selectPhoto = File(image.path);
+      print('Selected Audio: ${_selectPhoto!.path}');
+      return _selectPhoto;
+    } else {
+      // User canceled the file picker
+      print('No audio file selected');
+      return null;
+    }
   }
 
+  // Future getImages() async {
+  //   final pickedFile = await picker.pickMultiImage(
+  //       imageQuality: 100, maxHeight: 1000, maxWidth: 1000);
+  //   List<XFile> xfilePick = pickedFile;
+
+  //   setState(
+  //     () {
+  //       if (xfilePick.isNotEmpty) {
+  //         for (var i = 0; i < xfilePick.length; i++) {
+  //           _selectPhoto.add(File(xfilePick[i].path));
+  //         }
+  //       } else {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //             const SnackBar(content: Text('Nothing is selected')));
+  //       }
+  //     },
+  //   );
+  // }
+
+  Future<void> _sendImage() async {
+    if (_selectPhoto == null) {
+      return;
+    }
+
+    Dio dio = Dio();
+    FormData formData = FormData.fromMap({
+      "imagefile": await MultipartFile.fromFile(_selectPhoto!.path,
+          filename: "upload.jpg"),
+    });
+
+    try {
+      Response response = await dio.post(
+        "http://127.0.0.1:4000/predict",
+        data: formData,
+      );
+      print("File upload response: ${response.data}");
+    } catch (e) {
+      print("Error uploading file: $e");
+    }
+  }
 }
