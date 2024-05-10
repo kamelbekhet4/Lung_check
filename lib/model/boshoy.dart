@@ -1,8 +1,22 @@
-class Boshoy {
-    String className;
+class Prediction {
+  final String className;
 
-    Boshoy({
-        required this.className,
-    });
+  Prediction({required this.className});
 
+  factory Prediction.fromJson(Map<String, dynamic> json) {
+    return Prediction(
+      className: json['class_name'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = {};
+    data['class_name'] = className;
+    return data;
+  }
+
+  @override
+  String toString() {
+    return 'Prediction(className: $className)';
+  }
 }

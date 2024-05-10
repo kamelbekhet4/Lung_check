@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:untitled/model/boshoy.dart';
 
 import '../Screens/ResultScreen.dart';
 
@@ -16,7 +17,7 @@ class galleryScreen extends StatefulWidget {
 class _galleryScreenState extends State<galleryScreen> {
   final picker = ImagePicker();
   File? _selectPhoto;
-
+  String? data;
   @override
   Widget build(BuildContext context) {
     // display image selected from gallery
@@ -67,6 +68,10 @@ class _galleryScreenState extends State<galleryScreen> {
                 ),
                 onPressed: () {
                   _pickImage();
+
+                  if (_selectPhoto != null) {
+                    setState(() {});
+                  }
                 },
               ),
             ),
@@ -98,10 +103,12 @@ class _galleryScreenState extends State<galleryScreen> {
                   ),
                   onPressed: () {
                     _sendImage();
-                    // Navigator.push(
-                    //     context,
-                    //     MaterialPageRoute(
-                    //         builder: (context) => ResultScreen()));
+                    if (data != null) {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => ResultScreen(data: data)));
+                    }
                   },
                   child: Text(
                     'Result',
@@ -171,7 +178,20 @@ class _galleryScreenState extends State<galleryScreen> {
         "http://127.0.0.1:4000/predict",
         data: formData,
       );
-      print("File upload response: ${response.data}");
+      final responseJson = response.data;
+
+      if (responseJson is List) {
+        List<Prediction> predictions =
+            responseJson.map((json) => Prediction.fromJson(json)).toList();
+        print("File upload response: $predictions");
+      } else if (responseJson is Map<String, dynamic>) {
+        Prediction prediction = Prediction.fromJson(responseJson);
+        data = prediction.className;
+        print(data);
+        print("File upload response: $prediction");
+      } else {
+        print("Unexpected response format");
+      }
     } catch (e) {
       print("Error uploading file: $e");
     }

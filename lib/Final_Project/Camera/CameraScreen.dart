@@ -130,7 +130,9 @@ class _CameraScreenState extends State<CameraScreen> {
                           ),
 
                         ),
-                        onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => ResultScreen()));},
+                        onPressed: () {
+                          // Navigator.push(context, MaterialPageRoute(builder: (context) => ResultScreen(data: ,)));
+                           },
 
                         child: Text(
                           'Result',
